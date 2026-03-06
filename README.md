@@ -61,5 +61,3 @@ Powered by **Ollama**, OpenBrowser lets you chat with and summarize web pages wi
 - **Anonymized Search**: Integrated proxy sanitizes identifying information before it reaches search engines.
 
 ---
-
-Built with ❤️ for the privacy community by **ChrisD1231**.
