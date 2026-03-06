@@ -5,6 +5,8 @@
 
 **OpenBrowser** is a high-performance, privacy-first web browser built with **Electron**. It features cutting-edge privacy technologies, including a local AI engine and an integrated regional privacy tunnel (VPN).
 
+![OpenBrowser Landing Page](docs/images/landing.png)
+
 ---
 
 ## 🛡️ Core Pillars
