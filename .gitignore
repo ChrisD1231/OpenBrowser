@@ -1,0 +1,16 @@
+node_modules/
+.DS_Store
+*.log
+.env
+dist/
+build/
+.vscode/
+.idea/
+.gemini/
+brain/
+*.png
+*.jpg
+*.jpeg
+*.svg
+!src/renderer/images/
+!src/renderer/icons/
