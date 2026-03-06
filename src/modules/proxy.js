@@ -1,29 +1,73 @@
+const axios = require('axios');
+
 /**
  * Google Search Privacy Proxy & Privacy Tunnel (VPN)
- * Sanitizes requests and routes traffic through global regional nodes.
+ * Sanitizes requests and routes traffic through dynamic regional nodes.
  */
 class PrivacyTunnel {
     static REGIONS = {
-        'us': 'http://us-west.privacy-tunnel.io:8080',
-        'uk': 'http://uk-london.privacy-tunnel.io:8080',
-        'de': 'http://de-frankfurt.privacy-tunnel.io:8080',
-        'jp': 'http://jp-tokyo.privacy-tunnel.io:8080'
+        'us': 'US',
+        'uk': 'GB',
+        'de': 'DE',
+        'jp': 'JP'
     };
 
     static activeRegion = null;
+    static activeProxy = null;
 
     /**
      * Configure session to use a regional proxy tunnel
      */
     static async setTunnelProxy(session, regionCode) {
         this.activeRegion = regionCode;
+        
         if (!regionCode || !this.REGIONS[regionCode]) {
+            this.activeProxy = null;
             await session.setProxy({ proxyRules: 'direct://' });
             return;
         }
 
-        const proxyRules = this.REGIONS[regionCode];
-        await session.setProxy({ proxyRules, proxyBypassRules: '<local>' });
+        try {
+            // Fetch working proxies for the specified region
+            const countryCode = this.REGIONS[regionCode];
+            const proxies = await this.fetchWorkingProxies(countryCode);
+            
+            if (proxies.length === 0) {
+                throw new Error(`No working proxies found for ${regionCode}`);
+            }
+
+            // Pick a random proxy from the list
+            this.activeProxy = proxies[Math.floor(Math.random() * proxies.length)];
+            const proxyRules = `${this.activeProxy.protocol}://${this.activeProxy.ip}:${this.activeProxy.port}`;
+            
+            await session.setProxy({ proxyRules, proxyBypassRules: '<local>' });
+            console.log(`VPN Connected via ${proxyRules} (${regionCode})`);
+        } catch (e) {
+            console.error('VPN Connection Error:', e.message);
+            this.activeProxy = null;
+            await session.setProxy({ proxyRules: 'direct://' });
+            throw e;
+        }
+    }
+
+    /**
+     * Fetch a list of working proxies for a specific country
+     */
+    static async fetchWorkingProxies(countryCode) {
+        try {
+            // Using ProxyScrape API for free, public proxies
+            const response = await axios.get(`https://api.proxyscrape.com/v2/?request=displayproxies&protocol=http&timeout=5000&country=${countryCode}&ssl=all&anonymity=all`, { timeout: 10000 });
+            
+            if (!response.data || typeof response.data !== 'string') return [];
+
+            return response.data.trim().split('\r\n').map(p => {
+                const [ip, port] = p.split(':');
+                return { ip, port, protocol: 'http' };
+            }).filter(p => p.ip && p.port);
+        } catch (e) {
+            console.error('Failed to fetch proxies:', e.message);
+            return [];
+        }
     }
 
     /**

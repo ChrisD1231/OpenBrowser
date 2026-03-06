@@ -237,22 +237,36 @@ async function updateVPN() {
     const region = isEnabled ? vpnRegion.value : null;
     
     vpnRegion.disabled = !isEnabled;
+    tunnelStatus.classList.remove('active');
     
+    if (isEnabled) {
+        vpnLocationText.innerText = 'Connecting...';
+    }
+
     try {
         const result = await window.electronAPI.setVPNRegion(region);
         if (result.success) {
             if (isEnabled) {
                 tunnelStatus.classList.add('active');
                 vpnLocationText.innerText = `Tunnel: ${region.toUpperCase()}`;
+                addChatMessage(`[Privacy Tunnel] Protected via regional node: ${region.toUpperCase()}`, 'bot');
             } else {
-                tunnelStatus.classList.remove('active');
+                vpnLocationText.innerText = 'Tunnel: Off';
+                addChatMessage(`[Privacy Tunnel] Connection terminated.`, 'bot');
             }
             // Refresh active tab to apply proxy
             const activeView = document.querySelector('.browser-view.active');
             if (activeView) activeView.reload();
+        } else {
+            throw new Error(result.error);
         }
     } catch (e) {
         console.error('Failed to update VPN:', e);
+        vpnToggle.checked = false;
+        vpnRegion.disabled = true;
+        tunnelStatus.classList.remove('active');
+        vpnLocationText.innerText = 'Connection Failed';
+        alert('VPN Configuration Error: ' + e.message);
     }
 }
 
