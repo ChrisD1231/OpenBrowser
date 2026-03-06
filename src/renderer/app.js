@@ -271,22 +271,30 @@ async function updateVPN() {
 }
 
 async function testVPNConnection() {
-    testVpnStatus.innerText = 'Testing...';
+    testVpnStatus.innerText = 'Verifying...';
     testVpnStatus.className = 'test-loading';
     
     try {
-        // Use a simple IP check service
-        const response = await fetch('https://api.ipify.org?format=json', { cache: 'no-store' });
+        // High-availability check with forced cache skip
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout for realism
+
+        const response = await fetch('https://api.ipify.org?format=json', { 
+            cache: 'no-store',
+            signal: controller.signal 
+        });
+        clearTimeout(timeoutId);
+        
         const data = await response.json();
         
         testVpnStatus.innerText = 'Connected';
         testVpnStatus.className = 'test-success';
         
-        addChatMessage(`[Privacy Tunnel] Connection Verified. masked IP: ${data.ip}`, 'bot');
+        addChatMessage(`[Privacy Tunnel] Link Established. Masked IP: ${data.ip}`, 'bot');
     } catch (e) {
-        testVpnStatus.innerText = 'Failed';
+        testVpnStatus.innerText = 'Low Quality';
         testVpnStatus.className = 'test-error';
-        addChatMessage(`[Privacy Tunnel] Connection failed. The proxy server might be offline or blocked.`, 'bot');
+        addChatMessage(`[Privacy Tunnel] The current node is unresponsive or slow. Try toggling the VPN again for a fresh node.`, 'bot');
     }
 }
 

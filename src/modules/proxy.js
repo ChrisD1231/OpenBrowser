@@ -28,20 +28,42 @@ class PrivacyTunnel {
         }
 
         try {
-            // Fetch working proxies for the specified region
             const countryCode = this.REGIONS[regionCode];
             const proxies = await this.fetchWorkingProxies(countryCode);
             
             if (proxies.length === 0) {
-                throw new Error(`No working proxies found for ${regionCode}`);
+                throw new Error(`No available proxies for ${regionCode}`);
             }
 
-            // Pick a random proxy from the list
-            this.activeProxy = proxies[Math.floor(Math.random() * proxies.length)];
-            const proxyRules = `${this.activeProxy.protocol}://${this.activeProxy.ip}:${this.activeProxy.port}`;
-            
-            await session.setProxy({ proxyRules, proxyBypassRules: '<local>' });
-            console.log(`VPN Connected via ${proxyRules} (${regionCode})`);
+            // Retry loop: try up to 3 different proxies
+            let success = false;
+            const maxRetries = 3;
+            const shuffledProxies = proxies.sort(() => 0.5 - Math.random());
+
+            for (let i = 0; i < Math.min(maxRetries, shuffledProxies.length); i++) {
+                const proxy = shuffledProxies[i];
+                console.log(`Validating proxy [${i+1}/${maxRetries}]: ${proxy.ip}:${proxy.port}`);
+                
+                if (await this.validateProxy(proxy)) {
+                    this.activeProxy = proxy;
+                    const proxyRules = `${proxy.protocol}://${proxy.ip}:${proxy.port}`;
+                    
+                    // Apply to ALL traffic explicitly
+                    await session.setProxy({ 
+                        proxyRules, 
+                        proxyBypassRules: '<local>' 
+                    });
+                    
+                    console.log(`VPN Connected via ${proxyRules} (${regionCode})`);
+                    success = true;
+                    break;
+                }
+            }
+
+            if (!success) {
+                throw new Error(`Could not find a responsive node in ${regionCode} after ${maxRetries} attempts.`);
+            }
+
         } catch (e) {
             console.error('VPN Connection Error:', e.message);
             this.activeProxy = null;
@@ -51,11 +73,30 @@ class PrivacyTunnel {
     }
 
     /**
+     * Test a proxy's connectivity before committing to it
+     */
+    static async validateProxy(proxy) {
+        try {
+            // Using a high-availability IP check service for validation
+            const response = await axios.get('https://api.ipify.org?format=json', {
+                proxy: {
+                    host: proxy.ip,
+                    port: parseInt(proxy.port),
+                    protocol: 'http'
+                },
+                timeout: 5000 // 5 second timeout for validation
+            });
+            return response.status === 200;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    /**
      * Fetch a list of working proxies for a specific country
      */
     static async fetchWorkingProxies(countryCode) {
         try {
-            // Using ProxyScrape API for free, public proxies
             const response = await axios.get(`https://api.proxyscrape.com/v2/?request=displayproxies&protocol=http&timeout=5000&country=${countryCode}&ssl=all&anonymity=all`, { timeout: 10000 });
             
             if (!response.data || typeof response.data !== 'string') return [];
@@ -96,25 +137,31 @@ class PrivacyTunnel {
     static setupInterceptors(session) {
         session.webRequest.onBeforeSendHeaders({ urls: ['*://*/*'] }, (details, callback) => {
             const headers = details.requestHeaders;
-            
-            // Standard Privacy Cleanup
-            delete headers['Cookie'];
-            
-            // Dynamic Regional Header Spoofing
-            const region = this.activeRegion || 'us';
-            const langMap = { 'us': 'en-US,en;q=0.9', 'uk': 'en-GB,en;q=0.9', 'de': 'de-DE,de;q=0.9', 'jp': 'ja-JP,ja;q=0.9' };
-            const uaMap = {
-                'us': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-                'jp': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-                'de': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
-            };
+            const url = new URL(details.url);
 
-            headers['User-Agent'] = uaMap[region] || uaMap['us'];
-            headers['Accept-Language'] = langMap[region] || langMap['us'];
+            // SURGICAL PRIVACY: Only strip cookies for search engines to avoid breaking logins
+            const isSearchEngine = url.hostname.match(/(google|bing|duckduckgo|yahoo|ecosia)\./i);
+            if (isSearchEngine) {
+                delete headers['Cookie'];
+            }
             
-            Object.keys(headers).forEach(key => {
-                if (key.toLowerCase().startsWith('sec-ch-ua')) delete headers[key];
-            });
+            // Dynamic Regional Header Spoofing (Only if VPN is active)
+            if (this.activeRegion) {
+                const region = this.activeRegion;
+                const langMap = { 'us': 'en-US,en;q=0.9', 'uk': 'en-GB,en;q=0.9', 'de': 'de-DE,de;q=0.9', 'jp': 'ja-JP,ja;q=0.9' };
+                const uaMap = {
+                    'us': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                    'jp': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+                    'de': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+                };
+
+                headers['User-Agent'] = uaMap[region] || uaMap['us'];
+                headers['Accept-Language'] = langMap[region] || langMap['us'];
+                
+                Object.keys(headers).forEach(key => {
+                    if (key.toLowerCase().startsWith('sec-ch-ua')) delete headers[key];
+                });
+            }
 
             callback({ requestHeaders: headers });
         });
