@@ -1,4 +1,36 @@
-const { app, BrowserWindow, ipcMain, session } = require('electron');
+/**
+ * OpenBrowser Main Process
+ * Optimized for high security and privacy.
+ */
+
+let electron;
+try {
+    electron = require('electron');
+} catch (e) {
+    electron = null;
+}
+
+// Resilient fallback: if require('electron') returns a string (shadowed by npm package)
+// or fails, we attempt to bypass node_modules to find the built-in Electron APIs.
+if (!electron || !electron.app || typeof electron === 'string') {
+    const originalPaths = module.paths;
+    try {
+        module.paths = []; 
+        electron = require('electron');
+    } catch (e) {
+        // Last resort: standard require
+        electron = require('electron');
+    } finally {
+        module.paths = originalPaths;
+    }
+}
+
+if (!electron || !electron.app) {
+    console.error('CRITICAL: Electron APIs not found. Please ensure you are running this with the "electron" command.');
+    process.exit(1);
+}
+
+const { app, BrowserWindow, ipcMain, session } = electron;
 const path = require('path');
 const AdblockerModule = require('./modules/adblocker');
 const AIAssistant = require('./modules/ai-assistant');
