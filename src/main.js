@@ -36,7 +36,7 @@ async function initializeModules() {
         aiAssistant = new AIAssistant();
         adblocker = new AdblockerModule();
 
-        // 1. Initialize Adblocker (The most complex part)
+        // 1. Initialize Adblocker
         await adblocker.initialize(session.defaultSession);
         
         // 2. Set Privacy Config
@@ -48,6 +48,50 @@ async function initializeModules() {
         // 4. Handle Downloads
         session.defaultSession.on('will-download', (event, item) => {
             DownloadManager.handleDownload(mainWindow, item);
+        });
+
+        // 5. Global Content Security Policy (CSP)
+        session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+            callback({
+                responseHeaders: {
+                    ...details.responseHeaders,
+                    'Content-Security-Policy': [
+                        "default-src 'self' 'unsafe-inline'; " +
+                        "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " + // unsafe-eval needed for some local features
+                        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+                        "font-src 'self' https://fonts.gstatic.com; " +
+                        "img-src 'self' data: https:; " +
+                        "connect-src 'self' https: http:; " +
+                        "frame-src 'self'; " +
+                        "object-src 'none';"
+                    ]
+                }
+            });
+        });
+
+        // 6. Restrict Webview Permissions
+        app.on('web-contents-created', (event, contents) => {
+            contents.on('will-attach-webview', (event, webPreferences, params) => {
+                // Strip away dangerous capabilities
+                delete webPreferences.preload;
+                delete webPreferences.preloadURL;
+                
+                webPreferences.nodeIntegration = false;
+                webPreferences.contextIsolation = true;
+                webPreferences.sandbox = true;
+                
+                // Only allow specific webview URLs if possible, or just harden settings
+            });
+
+            contents.session.setPermissionRequestHandler((webContents, permission, callback) => {
+                const allowedPermissions = ['notifications', 'fullscreen'];
+                if (allowedPermissions.includes(permission)) {
+                    callback(true);
+                } else {
+                    console.warn(`Denied permission request for: ${permission}`);
+                    callback(false);
+                }
+            });
         });
 
         console.log('Modules initialized successfully.');
@@ -63,10 +107,12 @@ app.whenReady().then(async () => {
 
 // IPC Handlers
 ipcMain.handle('ask-ai', async (event, prompt, context) => {
+    if (typeof prompt !== 'string' || prompt.length > 5000) return 'Invalid prompt.';
     return await aiAssistant.ask(prompt, context);
 });
 
 ipcMain.handle('summarize-page', async (event, text) => {
+    if (typeof text !== 'string' || text.length > 50000) return 'Invalid content to summarize.';
     return await aiAssistant.summarize(text);
 });
 
@@ -75,7 +121,9 @@ ipcMain.handle('get-bookmarks', async () => {
 });
 
 ipcMain.on('add-bookmark', (event, url, title) => {
-    db.addBookmark(url, title);
+    if (typeof url !== 'string' || !url.startsWith('http')) return;
+    const sanitizedTitle = typeof title === 'string' ? title.substring(0, 100) : 'Untitled';
+    db.addBookmark(url, sanitizedTitle);
 });
 
 ipcMain.on('clear-history', () => {
@@ -83,10 +131,15 @@ ipcMain.on('clear-history', () => {
 });
 
 ipcMain.handle('verify-extension', async (event, extensionBuffer, expectedHash) => {
+    if (!Buffer.isBuffer(extensionBuffer) || typeof expectedHash !== 'string') return false;
+    if (extensionBuffer.length > 50 * 1024 * 1024) return false; // 50MB limit
     return SecurityModule.verifyIntegrity(extensionBuffer, expectedHash);
 });
 
 ipcMain.handle('set-vpn-region', async (event, regionCode) => {
+    const allowedRegions = ['us', 'uk', 'de', 'jp'];
+    if (!allowedRegions.includes(regionCode)) return { success: false, error: 'Invalid region' };
+    
     try {
         await PrivacyTunnel.setTunnelProxy(session.defaultSession, regionCode);
         return { success: true, region: regionCode };
@@ -115,10 +168,20 @@ ipcMain.handle('clear-all-data', async () => {
 });
 
 ipcMain.on('load-url', (event, url) => {
+    if (typeof url !== 'string' || url.length > 2048) return;
+    
     let targetUrl = url;
     if (!url.startsWith('http')) {
         targetUrl = `https://www.google.com/search?q=${encodeURIComponent(url)}`;
     }
-    targetUrl = PrivacyTunnel.sanitizeSearchUrl(targetUrl);
-    event.reply('url-changed', targetUrl);
+    
+    try {
+        const parsed = new URL(targetUrl);
+        if (!['http:', 'https:'].includes(parsed.protocol)) return;
+        
+        targetUrl = PrivacyTunnel.sanitizeSearchUrl(targetUrl);
+        event.reply('url-changed', targetUrl);
+    } catch (e) {
+        console.error('Invalid URL requested:', url);
+    }
 });

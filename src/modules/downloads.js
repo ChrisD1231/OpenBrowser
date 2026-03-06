@@ -14,7 +14,8 @@ class DownloadManager {
      * @param {string} expectedHash 
      */
     static handleDownload(window, item, expectedHash = null) {
-        const filePath = path.join(process.env.USERPROFILE || process.env.HOME, 'Downloads', item.getFilename());
+        const safeFilename = path.basename(item.getFilename());
+        const filePath = path.join(app.getPath('downloads'), safeFilename);
         item.setSavePath(filePath);
 
         item.on('updated', (event, state) => {
