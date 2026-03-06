@@ -3,7 +3,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/ChrisD1231/OpenBrowser?style=for-the-badge&color=818cf8)](https://github.com/ChrisD1231/OpenBrowser/stargazers)
 [![License](https://img.shields.io/github/license/ChrisD1231/OpenBrowser?style=for-the-badge&color=818cf8)](LICENSE)
 
-**OpenBrowser** is a high-performance, privacy-first web browser built with **Electron**. It combines a sleek, "Crystal" glassmorphism aesthetic with cutting-edge privacy features, including a local AI engine and an integrated regional privacy tunnel (VPN).
+**OpenBrowser** is a high-performance, privacy-first web browser built with **Electron**. It features cutting-edge privacy technologies, including a local AI engine and an integrated regional privacy tunnel (VPN).
 
 ---
 
@@ -27,15 +27,6 @@ Powered by **Ollama**, OpenBrowser lets you chat with and summarize web pages wi
 - **Database**: SQLite (better-sqlite3) with SHA-256 Hashing
 - **Network**: Integrated Proxy Routing + Adblocker Engine
 - **AI**: Ollama (Local LLM Integration)
-
----
-
-## 📸 Screenshots
-*(Coming Soon: Add your real browser screenshots to `docs/images/` to see them here!)*
-
-| Main Interface | Settings Panel | Landing Page |
-| :---: | :---: | :---: |
-| ![Main UI](docs/images/main_ui.png) | ![Settings](docs/images/settings.png) | ![Landing Page](docs/images/landing.png) |
 
 ---
 
