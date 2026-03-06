@@ -14,3 +14,4 @@ brain/
 *.svg
 !src/renderer/images/
 !src/renderer/icons/
+!docs/images/

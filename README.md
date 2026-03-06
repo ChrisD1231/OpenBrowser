@@ -21,36 +21,21 @@ Powered by **Ollama**, OpenBrowser lets you chat with and summarize web pages wi
 - **Model Support**: Llama 3, Mistral, and Phi-3.
 - **Context Aware**: Instantly summarize complex articles or research papers.
 
-### 3. Crystal Glassmorphism UI 💎
-A breathtaking, modern interface designed for the elite browsing experience.
-- **Space-Efficient**: Compact header to maximize screen real estate.
-- **Elite Aesthetics**: Ultra-thin glowing borders, vibrant HSL gradients, and smooth micro-animations.
-- **Dynamic Tabs**: Floating tab design with intuitive "Add Next" logic.
-
----
-
-## 📸 UI Previews
-
-### 🌊 Crystal Main Interface
-![Main UI](docs/images/main_ui.png)
-*The sleek, compact header and integrated AI sidebar.*
-
-### ⚙️ Deep Privacy Controls
-![Settings](docs/images/settings.png)
-*Manage your Privacy Tunnel, AI Models, and Security Vault.*
-
-### 🏠 Premium Landing Page
-![Landing Page](docs/images/landing.png)
-*The first-class welcome experience.*
-
----
-
-## 🛠️ Technology Stack
+## ⚙️ Core Technical Features
 - **Engine**: Electron + Chromium
-- **Styling**: Vanilla CSS (Crystal Glassmorphism)
+- **Styling**: Vanilla CSS (Premium Design System)
 - **Database**: SQLite (better-sqlite3) with SHA-256 Hashing
 - **Network**: Integrated Proxy Routing + Adblocker Engine
 - **AI**: Ollama (Local LLM Integration)
+
+---
+
+## 📸 Screenshots
+*(Coming Soon: Add your real browser screenshots to `docs/images/` to see them here!)*
+
+| Main Interface | Settings Panel | Landing Page |
+| :---: | :---: | :---: |
+| ![Main UI](docs/images/main_ui.png) | ![Settings](docs/images/settings.png) | ![Landing Page](docs/images/landing.png) |
 
 ---
 
