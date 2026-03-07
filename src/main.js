@@ -190,7 +190,7 @@ ipcMain.handle('verify-extension', async (event, extensionBuffer, expectedHash) 
 
 ipcMain.handle('set-vpn-region', async (event, regionCode) => {
     const allowedRegions = ['us', 'uk', 'de', 'jp'];
-    if (!allowedRegions.includes(regionCode)) return { success: false, error: 'Invalid region' };
+    if (regionCode && !allowedRegions.includes(regionCode)) return { success: false, error: 'Invalid region' };
     
     try {
         await PrivacyTunnel.setTunnelProxy(session.defaultSession, regionCode);
