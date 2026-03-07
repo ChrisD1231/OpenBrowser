@@ -163,8 +163,18 @@ body, html {
 }
 
 .burner-icon {
-    font-size: 12px;
-    margin-right: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    margin-right: 6px;
+    color: #ff5f56;
+}
+
+.nav-icon-svg {
+    width: 18px;
+    height: 18px;
 }
 
 /* --- Navigation Row --- */
