@@ -74,8 +74,8 @@ async function initializeModules() {
         // 2. Set Privacy Config
         AdblockerModule.setPrivacyConfig(session.defaultSession);
         
-        // 3. Setup Proxy Interceptors (Temporarily disabled for debugging)
-        // PrivacyTunnel.setupInterceptors(session.defaultSession);
+        // 3. Setup Proxy Interceptors
+        PrivacyTunnel.setupInterceptors(session.defaultSession);
 
         // 4. Handle Downloads
         session.defaultSession.on('will-download', (event, item) => {
@@ -104,7 +104,7 @@ async function initializeModules() {
             callback({ responseHeaders });
         });
 
-        // 6. Restrict Webview Permissions
+        // 6. Restrict Webview Permissions & Inject Privacy Enhancements
         app.on('web-contents-created', (event, contents) => {
             contents.on('will-attach-webview', (event, webPreferences, params) => {
                 // Strip away dangerous capabilities
@@ -114,8 +114,10 @@ async function initializeModules() {
                 webPreferences.nodeIntegration = false;
                 webPreferences.contextIsolation = true;
                 webPreferences.sandbox = true;
-                
-                // Only allow specific webview URLs if possible, or just harden settings
+
+                // Inject Advanced Fingerprint Masking
+                // We use a separate preload script for webviews to keep them isolated
+                webPreferences.preload = path.join(__dirname, 'modules', 'fingerprint.js');
             });
 
             contents.session.setPermissionRequestHandler((webContents, permission, callback) => {
@@ -127,6 +129,21 @@ async function initializeModules() {
                     callback(false);
                 }
             });
+        });
+
+        // 7. Partition Cleanup (for Burner Tabs)
+        ipcMain.handle('clear-partition-data', async (event, partition) => {
+            try {
+                const ses = session.fromPartition(partition);
+                await ses.clearStorageData({
+                    storages: ['cookies', 'localstorage', 'indexdb', 'cache', 'websql', 'serviceworkers', 'cachestorage']
+                });
+                console.log(`🔥 Wiped Burner Partition: ${partition}`);
+                return true;
+            } catch (e) {
+                console.error(`Failed to wipe partition ${partition}:`, e.message);
+                return false;
+            }
         });
 
         console.log('Modules initialized successfully.');

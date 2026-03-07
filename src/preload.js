@@ -36,6 +36,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     toggleAdblocker: (enabled) => ipcRenderer.send('toggle-adblocker', enabled),
     verifyExtension: (buffer, hash) => ipcRenderer.invoke('verify-extension', buffer, hash),
     setVPNRegion: (regionCode) => ipcRenderer.invoke('set-vpn-region', regionCode),
+    clearPartitionData: (partition) => ipcRenderer.invoke('clear-partition-data', partition),
     
     // Events
     onPageLoaded: (callback) => ipcRenderer.on('page-loaded', (event, data) => callback(data)),

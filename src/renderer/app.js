@@ -22,9 +22,10 @@ const phishingCheckBtn = document.getElementById('phishing-check-btn');
 
 // --- Tab Management ---
 
-function createTab(url = 'https://www.google.com') {
+function createTab(url = 'https://www.google.com', isBurner = false) {
     const id = Date.now();
-    const newTab = { id, url, title: 'New Tab' };
+    const partition = isBurner ? `persist:burner-${id}` : null;
+    const newTab = { id, url, title: isBurner ? '🔥 Burner Tab' : 'New Tab', isBurner, partition };
     
     // Insert next to active tab
     const activeIndex = tabs.findIndex(t => t.id === activeTabId);
@@ -32,9 +33,13 @@ function createTab(url = 'https://www.google.com') {
     
     // Create Tab UI
     const tabEl = document.createElement('div');
-    tabEl.className = 'tab';
+    tabEl.className = `tab ${isBurner ? 'burner' : ''}`;
     tabEl.dataset.tabId = id;
-    tabEl.innerHTML = `<span class="tab-title">New Tab</span><span class="close-tab">×</span>`;
+    tabEl.innerHTML = `
+        ${isBurner ? '<span class="burner-icon">🔥</span>' : ''}
+        <span class="tab-title">${newTab.title}</span>
+        <span class="close-tab">×</span>
+    `;
     
     tabEl.onclick = (e) => {
         if (e.target.classList.contains('close-tab')) {
@@ -56,6 +61,8 @@ function createTab(url = 'https://www.google.com') {
     webview.id = `view-${id}`;
     webview.className = 'browser-view';
     webview.src = url;
+    if (partition) webview.setAttribute('partition', partition);
+    
     webview.addEventListener('did-finish-load', () => updateTabInfo(id));
     
     // Aggressive Focus Management
@@ -90,10 +97,18 @@ function switchTab(id) {
     setTimeout(() => webview.focus(), 50);
 }
 
-function closeTab(id) {
+async function closeTab(id) {
     if (tabs.length === 1) return;
     
     const index = tabs.findIndex(t => t.id === id);
+    const tab = tabs[index];
+    
+    // If it's a burner tab, trigger partition cleanup
+    if (tab.isBurner && tab.partition) {
+        console.log(`🔥 Closing burner tab. Wiping partition: ${tab.partition}`);
+        window.electronAPI.clearPartitionData(tab.partition);
+    }
+
     tabs.splice(index, 1);
     
     document.querySelector(`.tab[data-tab-id="${id}"]`).remove();
@@ -121,6 +136,7 @@ function updateTabInfo(id) {
 
 // Initial Tab Setup
 document.getElementById('add-tab-btn').onclick = () => createTab();
+document.getElementById('add-burner-btn').onclick = () => createTab('https://www.google.com', true);
 document.querySelector('.tab[data-tab-id="1"]').onclick = (e) => {
     if (e.target.classList.contains('close-tab')) {
         closeTab(1);

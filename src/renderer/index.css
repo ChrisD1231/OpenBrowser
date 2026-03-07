@@ -138,14 +138,33 @@ body, html {
 .tab:hover .close-tab { opacity: 0.6; }
 .close-tab:hover { opacity: 1 !important; color: #ff5f56; }
 
-#add-tab-btn {
+#add-tab-btn, #add-burner-btn {
     background: transparent;
     border: none;
     color: var(--text-dim);
-    font-size: 20px;
+    font-size: 18px;
     line-height: 1;
     cursor: pointer;
     padding: 0 8px;
+    transition: 0.2s;
+}
+
+#add-tab-btn:hover { color: var(--text-main); }
+#add-burner-btn:hover { color: #ff5f56; transform: scale(1.1); }
+
+.tab.burner.active {
+    border-color: rgba(255, 95, 86, 0.4);
+    box-shadow: 0 4px 15px rgba(255, 95, 86, 0.2);
+}
+
+.tab.burner.active::after {
+    background: #ff5f56;
+    box-shadow: 0 0 8px #ff5f56;
+}
+
+.burner-icon {
+    font-size: 12px;
+    margin-right: 4px;
 }
 
 /* --- Navigation Row --- */
