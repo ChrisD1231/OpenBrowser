@@ -70,6 +70,9 @@ function switchTab(id) {
     
     const webview = document.getElementById(`view-${id}`);
     addressBar.value = webview.getURL();
+    
+    // Ensure the webview is focused for input
+    setTimeout(() => webview.focus(), 50);
 }
 
 function closeTab(id) {

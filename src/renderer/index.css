@@ -12,8 +12,9 @@
     --header-height: 84px;
 }
 
-* { box-sizing: border-box; -webkit-user-select: none; user-select: none; }
-input, textarea { -webkit-user-select: text; user-select: text; }
+* { box-sizing: border-box; }
+body { -webkit-user-select: none; user-select: none; }
+input, textarea, .browser-view { -webkit-user-select: text; user-select: text; }
 
 body, html {
     margin: 0; padding: 0;

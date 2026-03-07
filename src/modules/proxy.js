@@ -137,7 +137,12 @@ class PrivacyTunnel {
     static setupInterceptors(session) {
         session.webRequest.onBeforeSendHeaders({ urls: ['*://*/*'] }, (details, callback) => {
             const headers = details.requestHeaders;
-            const url = new URL(details.url);
+            let url;
+            try {
+                url = new URL(details.url);
+            } catch (e) {
+                return callback({ requestHeaders: headers });
+            }
 
             // SURGICAL PRIVACY: Temporarily disabled to debug "cannot type" issue
             /*
