@@ -56,12 +56,27 @@ function createTab(url = 'home.html') {
     webview.id = `view-${id}`;
     webview.className = 'browser-view';
     webview.src = url;
-    webview.setAttribute('autosize', 'on');
     webview.addEventListener('did-finish-load', () => updateTabInfo(id));
+    
+    // Aggressive Focus Management
+    webview.addEventListener('dom-ready', () => {
+        webview.focus();
+    });
+    
+    webview.addEventListener('focus', () => {
+        webview.classList.add('focused');
+    });
+
     browserContainer.appendChild(webview);
 
     switchTab(id);
 }
+
+// Click-to-Focus for Webviews
+browserContainer.addEventListener('mousedown', () => {
+    const activeView = document.querySelector('.browser-view.active');
+    if (activeView) activeView.focus();
+});
 
 function switchTab(id) {
     activeTabId = id;

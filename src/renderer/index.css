@@ -13,7 +13,6 @@
 }
 
 * { box-sizing: border-box; }
-body { -webkit-user-select: none; user-select: none; }
 input, textarea, .browser-view { -webkit-user-select: text; user-select: text; }
 
 body, html {

@@ -74,8 +74,8 @@ async function initializeModules() {
         // 2. Set Privacy Config
         AdblockerModule.setPrivacyConfig(session.defaultSession);
         
-        // 3. Setup Proxy Interceptors
-        PrivacyTunnel.setupInterceptors(session.defaultSession);
+        // 3. Setup Proxy Interceptors (Temporarily disabled for debugging)
+        // PrivacyTunnel.setupInterceptors(session.defaultSession);
 
         // 4. Handle Downloads
         session.defaultSession.on('will-download', (event, item) => {
