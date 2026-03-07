@@ -139,11 +139,13 @@ class PrivacyTunnel {
             const headers = details.requestHeaders;
             const url = new URL(details.url);
 
-            // SURGICAL PRIVACY: Only strip cookies for search engines to avoid breaking logins
+            // SURGICAL PRIVACY: Temporarily disabled to debug "cannot type" issue
+            /*
             const isSearchEngine = url.hostname.match(/(google|bing|duckduckgo|yahoo|ecosia)\./i);
             if (isSearchEngine) {
                 delete headers['Cookie'];
             }
+            */
             
             // Dynamic Regional Header Spoofing (Only if VPN is active)
             if (this.activeRegion) {
