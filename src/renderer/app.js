@@ -22,7 +22,7 @@ const phishingCheckBtn = document.getElementById('phishing-check-btn');
 
 // --- Tab Management ---
 
-function createTab(url = 'home.html') {
+function createTab(url = 'https://www.google.com') {
     const id = Date.now();
     const newTab = { id, url, title: 'New Tab' };
     
